@@ -17,14 +17,13 @@ const exerciseSchema = mongoose.Schema({
         type: Date,
         default: Date.now(),
         required: false,
-        get: getFormattedDate
     },
     userId: {
         type: mongoose.Schema.ObjectId,
         ref: "User",
         required: true,
     }
-}, { toJSON: { getters: true, }, toObject: { getters: true, } })
+})
 
 
 const Exercise = mongoose.model('Exercise', exerciseSchema)

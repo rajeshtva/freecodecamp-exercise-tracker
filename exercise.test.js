@@ -96,7 +96,6 @@ describe("features", () => {
 
         expect(statusCode).toBe(200);
         expect(body.log.length).not.toBe(0);
-        console.log(body)
     })
 
     test('/GET --> /api/users/:_id/logs?limit=&from=&to=', async () => {
@@ -122,7 +121,7 @@ describe("features", () => {
         exerciseData = await Exercise.insertMany(exerciseData)
 
         const { statusCode, body } = await supertest(app)
-            .get(`/api/users/${user._id.toString()}/logs?from=1994-04-01&to=1994-05-01&limit=3`);
+            .get(`/api/users/${user._id.toString()}/logs`);
 
         expect(statusCode).toBe(200);
         expect(body.log.length).not.toBe(0);

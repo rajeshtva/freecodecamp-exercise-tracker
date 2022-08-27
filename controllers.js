@@ -1,6 +1,10 @@
 const User = require('./models/user')
 const Exercise = require('./models/exercise')
 const { format } = require('date-fns')
+const fs = require('fs')
+
+let reqWriteStream = fs.createWriteStream('./req.json')
+
 
 const catchAsync = (f) => {
     return async (req, res, next) => {
@@ -20,7 +24,9 @@ exports.getAllUsers = async (req, res) => {
 
 exports.createNewUser = async (req, res) => {
 
+
     try {
+        reqWriteStream.write(JSON.stringify([req.body, req.query, req.params]))
         const user = await User.create(req.body);
         return res.json(user)
     } catch (error) {
@@ -30,6 +36,7 @@ exports.createNewUser = async (req, res) => {
 
 exports.createExerciseEntryForUser = async (req, res) => {
     try {
+        reqWriteStream.write(JSON.stringify([req.body, req.query, req.params]))
         let user = await User.findById(req.params._id)
         const exercise = await Exercise.create({ ...req.body, userId: user._id });
 
@@ -38,7 +45,7 @@ exports.createExerciseEntryForUser = async (req, res) => {
             username: user.username,
             description: exercise.description,
             duration: exercise.duration,
-            date: exercise.date,
+            date: exercise.date.toDateString(),
         }
 
         return res.json(data);
@@ -49,6 +56,7 @@ exports.createExerciseEntryForUser = async (req, res) => {
 
 exports.getAllLogsForUser = async (req, res) => {
     try {
+        reqWriteStream.write(JSON.stringify([req.body, req.query, req.params]))
         const user = await User.findById(req.params._id);
         const filter = { userId: user._id }
 
@@ -78,10 +86,8 @@ exports.getAllLogsForUser = async (req, res) => {
         log = log.map(l => ({
             description: l.description,
             duration: l.duration,
-            date: l.date
+            date: l.date.toDateString()
         }))
-
-        console.log(log)
 
         const data = {
             username: user.username,
