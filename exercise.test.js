@@ -83,14 +83,17 @@ describe("features", () => {
 
     test('/api/users/:_id/logs returns all logs', async () => {
         let exerciseData = [
-            { duration: 30, description: 'lorem ipsum2', date: 'Jan 04 1992', },
-            { duration: 50, description: 'lorem ipsum3', date: 'Jan 04 1993', },
-            { duration: 90, description: 'lorem ipsum4', date: 'Jan 04 1994', },
+            { duration: 30, description: 'lorem ipsum2', date: 'Jan 04 1992 UTC', },
+            { duration: 50, description: 'lorem ipsum3', date: 'Jan 04 1993 UTC', },
+            { duration: 90, description: 'lorem ipsum4', date: 'Jan 04 1994 UTC', },
         ]
-        const user = await User.create({ username: 'user4' })
-        exerciseData = exerciseData.map((it => { it.userId = user._id.toString(); return it; }));
+        let user = await User.create({ username: 'user4' })
+        // exerciseData = exerciseData.map((it => { it.userId = user._id.toString(); return it; }));
 
-        exerciseData = await Exercise.insertMany(exerciseData)
+        // exerciseData = await Exercise.insertMany(exerciseData)
+        user.exercises.push(...exerciseData);
+        user = await user.save();
+        // console.log(user);
 
         const { statusCode, body } = await supertest(app).get(`/api/users/${user._id.toString()}/logs`);
 
@@ -100,33 +103,30 @@ describe("features", () => {
 
     test('/GET --> /api/users/:_id/logs?limit=&from=&to=', async () => {
         let exerciseData = [
-            { duration: 30, description: 'lorem ipsum2', date: 'Jan 04 1994', },
-            { duration: 50, description: 'lorem ipsum3', date: 'Jan 05 1994', },
-            { duration: 90, description: 'lorem ipsum4', date: 'Feb 08 1994', },
-            { duration: 90, description: 'lorem ipsum4', date: 'Mar 10 1994', },
-            { duration: 90, description: 'lorem ipsum4', date: 'Apr 11 1994', },
-            { duration: 90, description: 'lorem ipsum4', date: 'Apr 15 1994', },
-            { duration: 90, description: 'lorem ipsum4', date: 'Apr 16 1994', },
-            { duration: 90, description: 'lorem ipsum4', date: 'Apr 17 1994', },
-            { duration: 80, description: 'lorem ipsum5', date: 'Apr 17 1994', },
-            { duration: 90, description: 'lorem ipsum4', date: 'May 02 1994', },
-            { duration: 90, description: 'lorem ipsum4', date: 'May 04 1994', },
-            { duration: 90, description: 'lorem ipsum4', date: 'May 10 1994', },
-            { duration: 90, description: 'lorem ipsum4', date: 'May 11 1994', },
-            { duration: 90, description: 'lorem ipsum4', date: 'May 14 1994', },
+            { duration: 30, description: 'lorem ipsum2', date: 'Jan 04 1994 UTC', },
+            { duration: 50, description: 'lorem ipsum3', date: 'Jan 05 1994 UTC', },
+            { duration: 90, description: 'lorem ipsum4', date: 'Feb 08 1994 UTC', },
+            { duration: 90, description: 'lorem ipsum4', date: 'Mar 10 1994 UTC', },
+            { duration: 90, description: 'lorem ipsum4', date: 'Apr 11 1994 UTC', },
+            { duration: 90, description: 'lorem ipsum4', date: 'Apr 15 1994 UTC', },
+            { duration: 90, description: 'lorem ipsum4', date: 'Apr 16 1994 UTC', },
+            { duration: 90, description: 'lorem ipsum4', date: 'Apr 17 1994 UTC', },
+            { duration: 80, description: 'lorem ipsum5', date: 'Apr 17 1994 UTC', },
+            { duration: 90, description: 'lorem ipsum4', date: 'May 02 1994 UTC', },
+            { duration: 90, description: 'lorem ipsum4', date: 'May 04 1994 UTC', },
+            { duration: 90, description: 'lorem ipsum4', date: 'May 10 1994 UTC', },
+            { duration: 90, description: 'lorem ipsum4', date: 'May 11 1994 UTC', },
+            { duration: 90, description: 'lorem ipsum4', date: 'May 14 1994 UTC', },
         ]
-        const user = await User.create({ username: 'user5' })
-        exerciseData = exerciseData.map((it => { it.userId = user._id.toString(); return it; }));
-
-        exerciseData = await Exercise.insertMany(exerciseData)
+        const user = await User.create({ username: 'user5', exercises: exerciseData })
 
         const { statusCode, body } = await supertest(app)
-            .get(`/api/users/${user._id.toString()}/logs`);
+            .get(`/api/users/${user._id.toString()}/logs?from=1994-04-01&to=1994-05-14`);
 
         expect(statusCode).toBe(200);
         expect(body.log.length).not.toBe(0);
-        expect(body.log.length).toBe(3);
-        console.log(body)
+        expect(body.log.length).toBe(10);
+        // console.log(body)
     })
 
 })

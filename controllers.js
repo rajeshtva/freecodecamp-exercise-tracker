@@ -2,6 +2,7 @@ const User = require('./models/user')
 const Exercise = require('./models/exercise')
 const { format } = require('date-fns')
 const fs = require('fs')
+const { exit } = require('process')
 
 let reqWriteStream = fs.createWriteStream('./req.json')
 
@@ -36,50 +37,61 @@ exports.createNewUser = async (req, res) => {
 
 exports.createExerciseEntryForUser = async (req, res) => {
     try {
-        reqWriteStream.write(JSON.stringify([req.body, req.query, req.params]))
+        // reqWriteStream.write(JSON.stringify([req.body, req.query, req.params]))
+
         let user = await User.findById(req.params._id)
-        const exercise = await Exercise.create({ ...req.body, userId: user._id });
+
+        if (!req.body.date) {
+            req.body.date = new Date().toISOString().substring(0, 10);
+        }
+
+        await Exercise.validate(req.body);
+        user.exercises.push(req.body)
+        user = await user.save()
+
+        const latestExercise = user.exercises[user.exercises.length - 1]
 
         const data = {
             _id: user._id,
             username: user.username,
-            description: exercise.description,
-            duration: exercise.duration,
-            date: exercise.date.toDateString(),
+            description: latestExercise.description,
+            duration: latestExercise.duration,
+            date: latestExercise.date.toDateString(),
         }
 
         return res.json(data);
     } catch (error) {
+        console.log(error)
         return res.json({ error: 'invalid input' })
     }
 }
 
 exports.getAllLogsForUser = async (req, res) => {
     try {
-        reqWriteStream.write(JSON.stringify([req.body, req.query, req.params]))
-        const user = await User.findById(req.params._id);
-        const filter = { userId: user._id }
-
+        const user = await User.findById(req.params._id).select('username _id, exercises');
         const { to, from, limit } = req.query;
-
-        if (to || from) {
-            filter.date = {}
-        }
+        let fromDate = new Date(0), toDate = new Date();
 
         if (to) {
-            filter.date.$lt = new Date(to)
+            toDate = new Date(to)
         }
 
         if (from) {
-            filter.date.$gt = new Date(from)
+            fromDate = new Date(from)
         }
 
-        let query = Exercise.find(filter)
+        toDate = toDate.getTime();
+        fromDate = fromDate.getTime();
+
+        let log = user.exercises.filter((item) => {
+            let itemDate = new Date(item.date).getTime()
+
+            return fromDate <= itemDate && itemDate <= toDate;
+        })
+
         if (limit) {
-            query = query.limit(+limit)
+            log = log.splice(0, +limit);
         }
-
-        let log = await query;
 
         if (!log) { return res.send('invalid input') }
 
@@ -87,14 +99,15 @@ exports.getAllLogsForUser = async (req, res) => {
             description: l.description,
             duration: l.duration,
             date: l.date.toDateString()
-        }))
+        }));
 
         const data = {
             username: user.username,
             count: log.length,
             _id: user._id.toString(),
-            log: log,
+            log,
         }
+
         return res.json(data)
     } catch (error) {
         console.log(error)

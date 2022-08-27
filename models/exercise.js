@@ -18,13 +18,7 @@ const exerciseSchema = mongoose.Schema({
         default: Date.now(),
         required: false,
     },
-    userId: {
-        type: mongoose.Schema.ObjectId,
-        ref: "User",
-        required: true,
-    }
 })
-
 
 const Exercise = mongoose.model('Exercise', exerciseSchema)
 
